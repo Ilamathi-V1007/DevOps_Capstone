@@ -1,0 +1,18 @@
+schema: '2.0'
+stages:
+  train:
+    cmd: python src/train.py
+    deps:
+    - path: data/wine.csv
+      hash: md5
+      md5: 2925c4a8cd201c79d97d3d283429ef23
+      size: 12261
+    - path: src/train.py
+      hash: md5
+      md5: c87ea625f287a9bccaa65152eb6bd8ae
+      size: 3717
+    outs:
+    - path: models/scaler.joblib
+      hash: md5
+      md5: e5dae8db27de00efe98901a5f0df68ae
+      size: 1359
