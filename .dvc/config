@@ -1,4 +1,4 @@
 [core]
-    remote = localstorage
-['remote "localstorage"']
-    url = /tmp/dvc-remote-storage
+    remote = origin
+['remote "origin"']
+    url = https://dagshub.com/Ilamathi-V1007/DevOps_Capstone.dvc
