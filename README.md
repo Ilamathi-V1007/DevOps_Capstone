@@ -12,6 +12,9 @@ Dataset → DVC Versioning → Training Script → MLflow Tracking → Best Mode
 **Dataset:** Wine classification dataset (178 samples, 13 features, 3 classes) —
 a structured, publicly available dataset suitable for a classification problem.
 
+**Live repo:** [github.com/Ilamathi-V1007/DevOps_Capstone](https://github.com/Ilamathi-V1007/DevOps_Capstone)
+**DVC + MLflow remote:** [dagshub.com/Ilamathi-V1007/DevOps_Capstone](https://dagshub.com/Ilamathi-V1007/DevOps_Capstone)
+
 ---
 
 ## Project Structure
@@ -45,12 +48,11 @@ Structured classification dataset: Wine classification (`sklearn.datasets.load_w
 
 ## 2. Data Versioning with DVC
 
-The dataset is tracked with DVC, and DVC is integrated with Git: Git holds the
-lightweight `.dvc` pointer file and `dvc.yaml` pipeline definition; the actual
-data lives in a DVC remote (not in the Git repo).
+The dataset is tracked with DVC, integrated with Git: Git holds the lightweight
+`.dvc` pointer file and `dvc.yaml` pipeline definition, while the actual data
+lives in a DVC remote hosted on **DagsHub**.
 
-**Remote:** [DagsHub](https://dagshub.com) — free DVC-compatible storage over
-HTTPS, connected to this GitHub repo.
+![DVC-tracked dataset on DagsHub](screenshots/dagshub-data.png)
 
 ### One-time local setup
 
@@ -59,7 +61,7 @@ dvc init
 dvc add data/wine.csv
 git add data/wine.csv.dvc data/.gitignore
 
-dvc remote add -d origin https://dagshub.com/<username>/DevOps_Capstone.dvc
+dvc remote add -d origin https://dagshub.com/Ilamathi-V1007/DevOps_Capstone.dvc
 dvc remote modify origin --local auth basic
 dvc remote modify origin --local user <your-dagshub-username>
 dvc remote modify origin --local password <your-dagshub-token>
@@ -70,15 +72,11 @@ git commit -m "Configure DVC remote and track dataset"
 git push
 ```
 
-### Pulling the data (e.g. on a fresh clone, or in CI)
+### Pulling the data (fresh clone, or in CI)
 
 ```bash
 dvc pull
 ```
-
-`git log` / `dvc status` demonstrate the Git↔DVC integration: every dataset
-change is a new DVC-tracked version, referenced by a small `.dvc` file
-committed to Git.
 
 ## 3. Machine Learning Pipeline
 
@@ -93,7 +91,9 @@ committed to Git.
 - **Model evaluation** — accuracy, macro F1, macro precision, macro recall on a held-out test split
 
 ```bash
-export MLFLOW_TRACKING_URI="sqlite:///mlflow.db"
+set MLFLOW_TRACKING_URI=https://dagshub.com/Ilamathi-V1007/DevOps_Capstone.mlflow
+set MLFLOW_TRACKING_USERNAME=<your-dagshub-username>
+set MLFLOW_TRACKING_PASSWORD=<your-dagshub-token>
 python src/train.py
 ```
 
@@ -104,16 +104,13 @@ Every run logs:
 - **Metrics** — accuracy, F1, precision, recall
 - **Model artifact** — the fitted scikit-learn model
 
-The script automatically compares all three runs by macro F1 and **registers
-the best-performing model** as `wine-classifier` in the MLflow Model Registry.
+Tracking is hosted on DagsHub's built-in MLflow server. The script automatically
+compares all three runs by macro F1 and **registers the best-performing model**
+(Random Forest, F1 = 1.0) as `Wine-Classifier` in the Model Registry.
 
-View and compare experiments in the MLflow UI:
+![MLflow experiment comparison — all 3 models](screenshots/mlflow-experiments.png)
 
-```bash
-mlflow ui --backend-store-uri sqlite:///mlflow.db
-```
-Open `http://localhost:5000` → check the experiment's run comparison table
-and the **Models** tab for the registered `wine-classifier`.
+![Registered model in the MLflow Model Registry](screenshots/mlflow-registry.png)
 
 ## 5. Prediction API
 
@@ -127,11 +124,15 @@ POST /predict
 Run locally:
 
 ```bash
-export MLFLOW_TRACKING_URI="sqlite:///mlflow.db"
+set MLFLOW_TRACKING_URI=https://dagshub.com/Ilamathi-V1007/DevOps_Capstone.mlflow
+set MLFLOW_TRACKING_USERNAME=<your-dagshub-username>
+set MLFLOW_TRACKING_PASSWORD=<your-dagshub-token>
 uvicorn src.app:app --host 0.0.0.0 --port 8000 --reload
 ```
 
 Interactive docs: `http://localhost:8000/docs`
+
+![FastAPI /predict endpoint working in Swagger UI](screenshots/fastapi-predict.png)
 
 Example request:
 
@@ -172,7 +173,7 @@ Visit `http://localhost:8000/docs` to confirm it's running inside the container.
 6. **Run tests** (`pytest tests/`)
 7. **Build the Docker image**
 
-A green run is visible in the repo's **Actions** tab.
+![Successful GitHub Actions CI run](screenshots/github-actions.png)
 
 ### Required GitHub secrets
 
@@ -186,7 +187,7 @@ Set these under **Settings → Secrets and variables → Actions**:
 ## 8. Tests
 
 ```bash
-export MLFLOW_TRACKING_URI="sqlite:///mlflow.db"
+set MLFLOW_TRACKING_URI=https://dagshub.com/Ilamathi-V1007/DevOps_Capstone.mlflow
 pytest tests/ -v
 ```
 
@@ -198,9 +199,9 @@ training pipeline's data loading, preprocessing, and evaluation functions.
 
 ## Submission Checklist
 
-- [ ] GitHub Repository link
-- [ ] Screenshot: MLflow experiment comparison (all 3 model runs)
-- [ ] Screenshot: registered model in the MLflow Model Registry
-- [ ] Screenshot: successful DVC tracking (`dvc push`/`dvc pull`/`dvc status` output, and/or the DagsHub data view)
-- [ ] Screenshot: successful GitHub Actions workflow run
-- [ ] Screenshot: FastAPI prediction endpoint working (Swagger UI or `curl` response)
+- [x] GitHub Repository link — https://github.com/Ilamathi-V1007/DevOps_Capstone
+- [x] Screenshot: MLflow experiment comparison (all 3 model runs)
+- [x] Screenshot: registered model in the MLflow Model Registry
+- [x] Screenshot: successful DVC tracking (DagsHub data view)
+- [x] Screenshot: successful GitHub Actions workflow run
+- [x] Screenshot: FastAPI prediction endpoint working (Swagger UI)

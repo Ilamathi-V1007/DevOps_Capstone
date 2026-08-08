@@ -80,6 +80,7 @@ def main():
     joblib.dump(scaler, os.path.join(models_dir, "scaler.joblib"))
 
     best_run_id = None
+    best_model_uri = None
     best_model_name = None
     best_f1 = -1.0
 
@@ -90,20 +91,20 @@ def main():
 
             mlflow.log_params(params)
             mlflow.log_metrics(metrics)
-            mlflow.sklearn.log_model(model, artifact_path="model")
+            model_info = mlflow.sklearn.log_model(model, artifact_path="model")
 
             print(f"[{model_name}] {metrics}")
 
             if metrics["f1_macro"] > best_f1:
                 best_f1 = metrics["f1_macro"]
                 best_run_id = run.info.run_id
+                best_model_uri = model_info.model_uri
                 best_model_name = model_name
 
     print(f"\nBest model: {best_model_name} (run_id={best_run_id}, f1_macro={best_f1:.4f})")
 
     # Register the best model in the MLflow Model Registry
-    model_uri = f"runs:/{best_run_id}/model"
-    registered = mlflow.register_model(model_uri=model_uri, name=REGISTERED_MODEL_NAME)
+    registered = mlflow.register_model(model_uri=best_model_uri, name=REGISTERED_MODEL_NAME)
     print(f"Registered '{REGISTERED_MODEL_NAME}' version {registered.version}")
 
 
